@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Foundry libraries
+foundry/lib/
+
+# Environment variables  
+.env
+.env.local
+foundry/.env
+
+# Build outputs
+frontend/.next/
+frontend/out/
+foundry/out/
+foundry/cache/
+foundry/broadcast/
+
+# OS files
+.DS_Store
+*.log
