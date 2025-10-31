@@ -11,17 +11,6 @@ PharmaVerify is a decentralized application (dApp) that enables pharmaceutical c
 
 ---
 
-## 🎯 Problem Statement
-
-- **10-15%** of drugs worldwide are counterfeit
-- **$200 billion** annual loss from fake medicines  
-- **1 million+** deaths per year from counterfeit drugs
-- Centralized tracking systems can be tampered with
-
-**Solution:** Immutable blockchain-based verification secured by Bitcoin's hash power through Rootstock.
-
----
-
 ## ✨ Features
 
 - 🔒 **Bitcoin-Secured** - Built on Rootstock, inheriting Bitcoin's security through merge mining
@@ -32,21 +21,6 @@ PharmaVerify is a decentralized application (dApp) that enables pharmaceutical c
 - 🚨 **Batch Recall System** - Instant recall notifications across the entire supply chain
 - 🔍 **Public Verification** - Anyone can verify, only authorized manufacturers can mint
 - 💾 **IPFS Integration** - Optional metadata storage for certificates and documentation
-
----
-
-## 🏗️ Architecture
-
-┌─────────────────────────────────────────────────────┐
-│ PHARMAVERIFY SYSTEM │
-└─────────────────────────────────────────────────────┘
-
-Frontend (Next.js) ←→ Smart Contract (Solidity) ←→ Rootstock Blockchain
-↓ ↓ ↓
-User Interface DrugNFT.sol Bitcoin Security
-QR Scanner ERC-721 NFTs Merge Mining
-MetaMask Batch Data Immutable Records
-
 
 ---
 
@@ -69,47 +43,6 @@ MetaMask Batch Data Immutable Records
 - **MetaMask** - Web3 wallet
 - **Vercel** - Frontend deployment platform
 - **Git** - Version control
-
----
-
-## 📂 Project Structure
-
-pharma-verify/
-├── foundry/ # Smart contracts
-│ ├── src/
-│ │ └── DrugNFT.sol # Main ERC-721 contract
-│ ├── script/
-│ │ └── Deploy.s.sol # Deployment script
-│ ├── test/
-│ │ └── DrugNFT.t.sol # Contract tests
-│ ├── .env # Private keys (git ignored)
-│ └── foundry.toml # Foundry configuration
-│
-├── frontend/ # Next.js dApp
-│ ├── src/
-│ │ ├── app/
-│ │ │ ├── page.js # Landing page
-│ │ │ ├── verify/ # QR scanner page
-│ │ │ │ └── page.js
-│ │ │ ├── mint/ # Manufacturer portal
-│ │ │ │ └── page.js
-│ │ │ └── layout.js # Root layout
-│ │ ├── components/
-│ │ │ ├── Navbar.js # Navigation bar
-│ │ │ ├── QRScanner.js # Camera QR scanner
-│ │ │ └── Footer.js # Footer component
-│ │ └── utils/
-│ │ ├── contract.js # Web3 integration
-│ │ └── constants.js # Contract address & config
-│ ├── public/
-│ │ └── abi/
-│ │ └── DrugNFT.json # Contract ABI
-│ ├── .env.local # Environment variables
-│ └── package.json
-│
-├── .gitignore
-└── README.md
-
 
 ---
 
@@ -166,10 +99,15 @@ Load environment variables
 source .env
 
 Deploy to Rootstock testnet
+
 forge script script/Deploy.s.sol
+
 --rpc-url https://public-node.testnet.rsk.co
+
 --broadcast
+
 --legacy
+
 -vvv
 
 
@@ -182,17 +120,22 @@ DrugNFT deployed to: 0xYourContractAddress
 cd ../frontend
 
 Install dependencies
+
 npm install
 
 
 **Create `.env.local` file:**
+
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourDeployedContractAddress
+
 NEXT_PUBLIC_CHAIN_ID=31
+
 NEXT_PUBLIC_RPC_URL=https://public-node.testnet.rsk.co
 
 
 **Copy Contract ABI:**
 mkdir -p public/abi
+
 cp ../foundry/out/DrugNFT.sol/DrugNFT.json public/abi/
 
 
@@ -201,39 +144,6 @@ npm run dev
 
 
 Visit `http://localhost:3000`
-
----
-
-## 🎮 Usage Guide
-
-### **For Consumers/Pharmacists (Verify Drug)**
-
-1. Navigate to `/verify` page
-2. Click "🎥 Activate Camera"
-3. Allow camera permissions
-4. Point camera at QR code on medicine package
-5. View verification results:
-   - ✅ **AUTHENTIC** - Drug is genuine and valid
-   - ❌ **EXPIRED** - Drug has passed expiry date
-   - ❌ **RECALLED** - Manufacturer has recalled this batch
-   - ❌ **INVALID** - Token doesn't exist (counterfeit)
-
-**Alternative:** Manually enter Token ID if QR code is unavailable
-
-### **For Manufacturers (Mint Drug Batch)**
-
-1. Navigate to `/mint` page
-2. Click "Connect MetaMask"
-3. Approve connection in MetaMask popup
-4. Fill in batch details:
-   - **Batch ID:** Unique identifier (e.g., BATCH-2025-PFZ-001)
-   - **Manufacturer:** Your company name
-   - **Expiry Date:** Drug expiration date
-   - **IPFS Hash:** (Optional) Link to certificates/documentation
-5. Click "Mint Batch NFT"
-6. Confirm transaction in MetaMask
-7. Download generated QR code
-8. Print QR code on drug packages
 
 ---
 
