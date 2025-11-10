@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { mintBatch, connectWallet } from '@/utils/contract';
+import { mintBatch } from '@/utils/contract';
 import QRCode from 'react-qr-code';
 
 export default function MintPage() {
@@ -14,15 +14,70 @@ export default function MintPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleConnect = async () => {
+  // Connect MetaMask wallet
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      setError("MetaMask not found. Please install MetaMask extension.");
+      return;
+    }
+
+    setIsConnecting(true);
+    setError(null);
+
     try {
-      const { address } = await connectWallet();
-      setWalletAddress(address);
+      // This will ALWAYS show the MetaMask popup (account selection)
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      
+      if (accounts && accounts.length > 0) {
+        setAccount(accounts[0]);
+        console.log("Connected account:", accounts[0]);
+
+        // Check network
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== '0x1f') {
+          setError("⚠️ Please switch to Rootstock Testnet (Chain ID: 31) in MetaMask");
+        }
+      }
+    } catch (error) {
+      console.error("Connection error:", error);
+      if (error.code === 4001) {
+        setError("Connection rejected. Please approve the request in MetaMask.");
+      } else {
+        setError("Failed to connect wallet. Please try again.");
+      }
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Proper disconnect that revokes permissions
+  const disconnectWallet = async () => {
+    try {
+      // Request to revoke permissions (this makes MetaMask ask again next time)
+      await window.ethereum.request({
+        method: "wallet_revokePermissions",
+        params: [{ eth_accounts: {} }],
+      });
+      
+      setAccount(null);
+      setResult(null);
       setError(null);
-    } catch (err) {
-      setError(err.message);
+      
+      console.log("✅ Wallet disconnected and permissions revoked");
+    } catch (error) {
+      // If wallet_revokePermissions not supported (older MetaMask), just clear state
+      console.log("Permissions revoke not supported, just clearing state");
+      setAccount(null);
+      setResult(null);
+      setError(null);
+      
+      // Show message to user
+      alert("💡 Tip: To fully disconnect, go to MetaMask → Settings → Connected Sites → Remove this site");
     }
   };
 
@@ -40,7 +95,7 @@ export default function MintPage() {
     setResult(null);
 
     try {
-      if (!walletAddress) {
+      if (!account) {
         throw new Error('Please connect your wallet first');
       }
 
@@ -53,7 +108,6 @@ export default function MintPage() {
 
       setResult({ tokenId, txHash });
       
-      // Reset form
       setFormData({
         batchId: '',
         manufacturer: '',
@@ -101,37 +155,63 @@ export default function MintPage() {
         </p>
 
         {/* Wallet Connection */}
-        {!walletAddress ? (
+        {!account ? (
           <div className="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-8 text-center">
             <div className="text-6xl mb-4">🔐</div>
             <h2 className="text-2xl font-bold mb-3 text-gray-800">
               Connect Wallet
             </h2>
             <p className="text-gray-600 mb-6">
-              Connect your wallet to mint pharmaceutical batch NFTs
+              Connect your MetaMask wallet to mint pharmaceutical batch NFTs
             </p>
+            
             <button
-              onClick={handleConnect}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-lg"
+              onClick={connectWallet}
+              disabled={isConnecting}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Connect MetaMask
+              {isConnecting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Connecting...
+                </span>
+              ) : (
+                'Connect MetaMask'
+              )}
             </button>
+
+            {error && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            )}
+
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg text-left">
+              <p className="text-sm text-blue-800 font-semibold mb-2">
+                💡 Connection Tips:
+              </p>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• MetaMask popup will appear for account selection</li>
+                <li>• Approve the connection request</li>
+                <li>• Make sure you're on Rootstock Testnet (Chain ID: 31)</li>
+              </ul>
+            </div>
           </div>
         ) : (
           <>
-            {/* Connected Wallet Info */}
+            {/* Connected Wallet Display */}
             <div className="bg-white/95 backdrop-blur rounded-xl shadow-lg p-4 mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-600 text-sm">Connected:</span>
-                  <code className="text-sm font-mono text-gray-800">
-                    {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                  <span className="text-gray-600 text-sm font-semibold">Connected:</span>
+                  <code className="text-sm font-mono text-gray-800 bg-gray-100 px-3 py-1 rounded">
+                    {account.slice(0, 6)}...{account.slice(-4)}
                   </code>
                 </div>
                 <button
-                  onClick={() => setWalletAddress(null)}
-                  className="text-red-600 hover:text-red-700 text-sm font-semibold"
+                  onClick={disconnectWallet}
+                  className="text-red-600 hover:text-red-700 text-sm font-semibold hover:bg-red-50 px-3 py-1 rounded transition"
                 >
                   Disconnect
                 </button>
@@ -141,7 +221,6 @@ export default function MintPage() {
             {/* Mint Form */}
             <div className="bg-white/95 backdrop-blur rounded-2xl shadow-xl p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Batch ID */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Batch ID *
@@ -157,7 +236,6 @@ export default function MintPage() {
                   />
                 </div>
 
-                {/* Manufacturer */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Manufacturer Name *
@@ -173,7 +251,6 @@ export default function MintPage() {
                   />
                 </div>
 
-                {/* Expiry Date */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Expiry Date *
@@ -189,7 +266,6 @@ export default function MintPage() {
                   />
                 </div>
 
-                {/* IPFS Hash (Optional) */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     IPFS Metadata Hash (Optional)
@@ -207,7 +283,6 @@ export default function MintPage() {
                   </p>
                 </div>
 
-                {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -219,15 +294,17 @@ export default function MintPage() {
                       Minting...
                     </span>
                   ) : (
-                    'Mint Batch NFT'
+                    '🏭 Mint Batch NFT'
                   )}
                 </button>
               </form>
 
-              {/* Error Display */}
               {error && (
                 <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-red-700 text-sm">{error}</p>
+                  <div className="flex items-start gap-2">
+                    <span className="text-red-600 text-lg">⚠️</span>
+                    <p className="text-red-700 text-sm">{error}</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -247,20 +324,19 @@ export default function MintPage() {
               <p className="text-gray-600">Your pharmaceutical batch NFT has been created</p>
             </div>
 
-            {/* Token Details */}
             <div className="bg-white rounded-xl p-6 mb-6">
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-500">Token ID</p>
+                  <p className="text-sm text-gray-500 mb-1">Token ID</p>
                   <p className="text-2xl font-bold text-gray-800">#{result.tokenId}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Transaction</p>
+                  <p className="text-sm text-gray-500 mb-1">Transaction</p>
                   <a
-                    href={`https://rootstock-testnet.blockscout.com/tx/${result.txHash}`}
+                    href={`https://explorer.testnet.rootstock.io/tx/${result.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-700 text-sm font-mono break-all"
+                    className="text-blue-600 hover:text-blue-700 text-sm font-mono break-all hover:underline"
                   >
                     {result.txHash.slice(0, 10)}...
                   </a>
@@ -268,12 +344,11 @@ export default function MintPage() {
               </div>
             </div>
 
-            {/* QR Code */}
             <div className="bg-white rounded-xl p-6 text-center">
               <h3 className="font-bold text-lg mb-4 text-gray-800">
-                QR Code for Drug Package
+                📱 QR Code for Drug Package
               </h3>
-              <div className="inline-block bg-white p-4 rounded-lg shadow-sm">
+              <div className="inline-block bg-white p-4 rounded-lg shadow-md border-2 border-gray-200">
                 <QRCode
                   id="qr-code"
                   value={result.tokenId.toString()}
@@ -282,23 +357,32 @@ export default function MintPage() {
                 />
               </div>
               <p className="text-sm text-gray-600 mt-3 mb-4">
-                Print this QR code on drug packages for verification
+                Print this QR code on drug packages for instant verification
               </p>
               <button
                 onClick={downloadQR}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md"
               >
-                Download QR Code
+                ⬇️ Download QR Code
               </button>
             </div>
 
-            {/* Action Button */}
-            <button
-              onClick={() => setResult(null)}
-              className="w-full mt-6 bg-gray-800 text-white py-3 rounded-lg font-semibold hover:bg-gray-900 transition"
-            >
-              Mint Another Batch
-            </button>
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <button
+                onClick={() => setResult(null)}
+                className="bg-gray-800 text-white py-3 rounded-lg font-semibold hover:bg-gray-900 transition"
+              >
+                Mint Another Batch
+              </button>
+              <a
+                href={`https://explorer.testnet.rootstock.io/token/${process.env.NEXT_PUBLIC_CONTRACT_ADDRESS}/instance/${result.tokenId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition text-center"
+              >
+                View on Explorer
+              </a>
+            </div>
           </div>
         )}
       </div>

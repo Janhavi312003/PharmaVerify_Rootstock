@@ -5,39 +5,24 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function QRScanner({ onScan, onReady }) {
   const scannerRef = useRef(null);
-  const containerRef = useRef(null);
   const [error, setError] = useState(null);
   const [isStarted, setIsStarted] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
 
   const requestCameraPermission = async () => {
     try {
-      // Request permission first
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
       });
-      
-      // Permission granted! Stop the stream and initialize scanner
       stream.getTracks().forEach(track => track.stop());
-      setPermissionGranted(true);
       initializeScanner();
-      
     } catch (err) {
-      console.error('Camera permission error:', err);
-      if (err.name === 'NotAllowedError') {
-        setError('❌ Camera access denied. Please allow camera access in your browser settings.');
-      } else if (err.name === 'NotFoundError') {
-        setError('📷 No camera found. Please connect a camera or use manual entry.');
-      } else {
-        setError('⚠️ Could not access camera: ' + err.message);
-      }
+      setError('❌ Camera access denied. Please allow camera access in browser settings.');
     }
   };
 
   const initializeScanner = () => {
     setIsStarted(true);
     
-    // Wait for DOM
     setTimeout(() => {
       if (!scannerRef.current) {
         scannerRef.current = new Html5QrcodeScanner(
@@ -45,8 +30,7 @@ export default function QRScanner({ onScan, onReady }) {
           { 
             fps: 10,
             qrbox: { width: 250, height: 250 },
-            aspectRatio: 1.0,
-            showTorchButtonIfSupported: true
+            aspectRatio: 1.0
           },
           false
         );
@@ -60,8 +44,8 @@ export default function QRScanner({ onScan, onReady }) {
             }
           },
           (errorMessage) => {
-            // Ignore "No QR code found" errors
-            if (!errorMessage.includes('NotFoundException')) {
+            // FIX: Check if errorMessage is string and ignore "NotFoundException"
+            if (typeof errorMessage === 'string' && !errorMessage.includes('NotFoundException')) {
               console.warn('QR Error:', errorMessage);
             }
           }
@@ -84,7 +68,7 @@ export default function QRScanner({ onScan, onReady }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div className="w-full">
       {!isStarted && !error && (
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 text-center border-2 border-blue-200">
           <div className="text-6xl mb-4 animate-bounce">📸</div>
@@ -93,7 +77,7 @@ export default function QRScanner({ onScan, onReady }) {
           </h3>
           <p className="text-gray-600 mb-6 text-sm">
             Click the button below to activate your camera.<br />
-            You'll be asked to allow camera access.
+            Point at the QR code on the medicine package.
           </p>
           <button
             onClick={requestCameraPermission}
@@ -108,7 +92,6 @@ export default function QRScanner({ onScan, onReady }) {
         </div>
       )}
       
-      {/* Scanner container - must exist before initialization */}
       {isStarted && (
         <div className="bg-white rounded-xl p-4 shadow-inner">
           <div id="qr-reader" className="rounded-lg overflow-hidden"></div>
@@ -137,7 +120,6 @@ export default function QRScanner({ onScan, onReady }) {
                 onClick={() => {
                   setError(null);
                   setIsStarted(false);
-                  setPermissionGranted(false);
                 }}
                 className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition"
               >

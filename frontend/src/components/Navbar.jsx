@@ -29,14 +29,6 @@ export default function Navbar() {
             <Link href="/mint" className="text-gray-700 hover:text-blue-600 transition">
               Mint Batch
             </Link>
-            <a 
-              href="https://github.com/yourusername/pharma-verify" 
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-700 hover:text-blue-600 transition"
-            >
-              GitHub
-            </a>
           </div>
 
           {/* Mobile menu button */}

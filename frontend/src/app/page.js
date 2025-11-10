@@ -7,40 +7,6 @@ export default function Home() {
       {/* Hero Section */}
       <Hero />
 
-      {/* Features Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="bg-white/95 backdrop-blur p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
-              <div className="text-5xl mb-4">🔒</div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-800">Bitcoin-Secured</h3>
-              <p className="text-gray-600">
-                Deployed on Rootstock, leveraging Bitcoin's unmatched security for pharmaceutical data integrity.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="bg-white/95 backdrop-blur p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
-              <div className="text-5xl mb-4">⚡</div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-800">Instant Verification</h3>
-              <p className="text-gray-600">
-                Scan QR codes to verify drug authenticity and expiry in seconds. No delays, just safety.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="bg-white/95 backdrop-blur p-8 rounded-2xl shadow-xl hover:shadow-2xl transition">
-              <div className="text-5xl mb-4">🌐</div>
-              <h3 className="text-2xl font-bold mb-3 text-gray-800">Immutable Records</h3>
-              <p className="text-gray-600">
-                Every batch stored as an NFT on-chain. Tamper-proof, transparent, and permanent.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Stats Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
